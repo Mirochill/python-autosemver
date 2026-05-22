@@ -17,7 +17,35 @@
 # along with autosemver; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+import pytest
+
+from autosemver import packaging
 
 
-def test_dummy():
-    pass
+def test_current_version_falls_back_to_installed_metadata(monkeypatch, tmpdir):
+    class FakeMetadata:
+        @staticmethod
+        def version(project_name):
+            assert project_name == "sample-project"
+            return "1.2.3"
+
+    def fail_current_version(repo_path):
+        raise RuntimeError("not a git repository")
+
+    monkeypatch.setattr(packaging, "importlib_metadata", FakeMetadata)
+    monkeypatch.setattr(packaging.api, "get_current_version", fail_current_version)
+
+    assert (
+        packaging.get_current_version(
+            project_name="sample-project",
+            project_dir=str(tmpdir),
+        )
+        == "1.2.3"
+    )
+
+
+def test_installed_version_requires_metadata_module(monkeypatch):
+    monkeypatch.setattr(packaging, "importlib_metadata", None)
+
+    with pytest.raises(ImportError, match="importlib.metadata is unavailable"):
+        packaging._get_installed_version("sample-project")

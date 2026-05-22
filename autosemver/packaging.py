@@ -27,12 +27,27 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 import os
-import sys
 from typing import Optional, Set
 
-import pkg_resources
+try:
+    from importlib import metadata as importlib_metadata
+except ImportError:
+    try:
+        import importlib_metadata
+    except ImportError:
+        importlib_metadata = None
 
 from . import api
+
+
+def _get_installed_version(project_name: str) -> str:
+    if importlib_metadata is None:
+        raise ImportError(
+            "importlib.metadata is unavailable. Install importlib-metadata to "
+            "read installed package versions on this Python version."
+        )
+
+    return importlib_metadata.version(project_name)
 
 
 def get_current_version(
@@ -47,6 +62,7 @@ def get_current_version(
       if project_name was specified.
     * From the PKG-INFO file if inside a packaged distro.
     * From the git history.
+    * From the installed package metadata if project_name was specified.
 
     Args:
         project_name(str): Name of the project to get the version for, if none
@@ -81,20 +97,7 @@ def get_current_version(
 
     if version is None:
         if project_name:
-            if sys.version_info > (3, 8):
-                try:
-                    import importlib.metadata
-
-                    version = importlib.metadata.version(project_name)
-                except Exception:
-                    raise
-            else:
-                try:
-                    # deprecated
-                    distribution = pkg_resources.get_distribution(project_name)
-                    version = distribution.version
-                except Exception:
-                    raise
+            version = _get_installed_version(project_name)
 
     if version is None:
         raise RuntimeError("Failed to get package version")
