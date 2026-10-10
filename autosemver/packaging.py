@@ -235,7 +235,7 @@ def create_changelog(
     if os.path.exists(pkg_info_file):
         return
 
-    with open("CHANGELOG", "wb") as changelog_fd:
+    with open(os.path.join(project_dir, "CHANGELOG"), "wb") as changelog_fd:
         changelog_fd.write(
             get_changelog(
                 project_dir=project_dir,
@@ -263,7 +263,7 @@ def create_releasenotes(project_dir: str = os.curdir, bugtracker_url: str = "") 
     if os.path.exists(pkg_info_file):
         return
 
-    with open("RELEASE_NOTES", "wb") as releasenotes_fd:
+    with open(os.path.join(project_dir, "RELEASE_NOTES"), "wb") as releasenotes_fd:
         releasenotes_fd.write(
             get_releasenotes(
                 project_dir=project_dir,
